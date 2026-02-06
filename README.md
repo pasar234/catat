@@ -1,0 +1,2 @@
+# StokPintar
+Stok aplikasi pintar
