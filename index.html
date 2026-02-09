@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catatan Pintar</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+        }
+        
+        .app-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .status-online {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .screen {
+            display: none;
+            padding: 20px;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        /* List Screen */
+        .search-box {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 15px 45px 15px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            background: #f8f9fa;
+        }
+        
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+        
+        .filter-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .filter-tag {
+            padding: 10px 18px;
+            background: #f0f0f0;
+            border-radius: 25px;
+            font-size: 14px;
+            white-space: nowrap;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .filter-tag.active {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        /* TOMBOL CATATAN BARU - FIXED */
+        .btn-new-note {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 25px;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .btn-new-note:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-new-note:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .notes-container {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .note-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .note-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .note-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .note-content {
+            color: #666;
+            margin-bottom: 12px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        
+        .note-date {
+            color: #888;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .note-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-btn {
+            background: #f8f9fa;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .action-btn.edit {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .action-btn.delete {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .action-btn.pin {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        /* Add/Edit Screen */
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .form-header h2 {
+            color: #333;
+            font-size: 22px;
+        }
+        
+        .btn-back {
+            background: #f0f0f0;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea.form-input {
+            min-height: 200px;
+            resize: vertical;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+        
+        .button-group button {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-save {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-delete {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-cancel {
+            background: #757575;
+            color: white;
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state i {
+            font-size: 60px;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #666;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        .toast.success {
+            background: #4CAF50;
+        }
+        
+        .toast.error {
+            background: #f44336;
+        }
+        
+        /* Responsive */
+        @media (min-width: 768px) {
+            .app-container {
+                max-width: 800px;
+                margin: 20px auto;
+                border-radius: 20px;
+                overflow: hidden;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            }
+            
+            .notes-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-book"></i> Catatan Pintar</h1>
+            <p>Aplikasi Catatan Offline</p>
+            <div class="status-online">
+                <i class="fas fa-wifi"></i> <span>Online</span>
+            </div>
+        </div>
+        
+        <!-- Screen 1: Daftar Catatan -->
+        <div id="screen-list" class="screen active">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Cari catatan...">
+                <i class="fas fa-search"></i>
+            </div>
+            
+            <div class="filter-tags">
+                <button class="filter-tag active" data-filter="all">Semua</button>
+                <button class="filter-tag" data-filter="pinned">📌 Disematkan</button>
+                <button class="filter-tag" data-filter="recent">🕒 Terbaru</button>
+                <button class="filter-tag" data-filter="important">⭐ Penting</button>
+            </div>
+            
+            <!-- TOMBOL INI SEKARANG PASTI BISA DIKLIK -->
+            <button class="btn-new-note" id="add-note-button">
+                <i class="fas fa-plus"></i> Catatan Baru
+            </button>
+            
+            <div id="notes-container" class="notes-container">
+                <!-- Catatan akan muncul di sini -->
+            </div>
+            
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <i class="fas fa-clipboard"></i>
+                <h3>Belum ada catatan</h3>
+                <p>Mulai dengan membuat catatan pertama Anda</p>
+                <button class="btn-new-note" style="margin-top: 20px; width: auto; padding: 15px 30px;">
+                    <i class="fas fa-plus"></i> Buat Catatan Pertama
+                </button>
+            </div>
+        </div>
+        
+        <!-- Screen 2: Tambah/Edit Catatan -->
+        <div id="screen-add" class="screen">
+            <div class="form-header">
+                <h2 id="form-title">Catatan Baru</h2>
+                <button class="btn-back" id="back-button">
+                    <i class="fas fa-arrow-left"></i> Kembali
+                </button>
+            </div>
+            
+            <div class="form-group">
+                <label for="title"><i class="fas fa-heading"></i> Judul</label>
+                <input type="text" id="title" class="form-input" placeholder="Judul catatan" maxlength="100">
+            </div>
+            
+            <div class="form-group">
+                <label for="content"><i class="fas fa-edit"></i> Isi Catatan</label>
+                <textarea id="content" class="form-input" placeholder="Tulis catatan di sini..." rows="8"></textarea>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-save" id="save-button">
+                    <i class="fas fa-save"></i> SIMPAN
+                </button>
+                <button class="btn-delete" id="delete-button" style="display: none;">
+                    <i class="fas fa-trash"></i> HAPUS
+                </button>
+                <button class="btn-cancel" id="cancel-button">
+                    <i class="fas fa-times"></i> BATAL
+                </button>
+            </div>
+        </div>
+        
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="stats">
+                <span id="note-count">0 catatan</span>
+                <span id="pinned-count"> • 0 disematkan</span>
+            </div>
+            <div id="last-sync">Baru saja</div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toast-message">Catatan berhasil disimpan!</span>
+    </div>
+
+    <script>
+        // ============================================
+        // APLIKASI CATATAN - SIMPLE & WORKING VERSION
+        // ============================================
+        
+        console.log('Aplikasi Catatan dimulai...');
+        
+        // State aplikasi
+        let notes = [];
+        let editingNoteId = null;
+        
+        // Inisialisasi saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM siap, menginisialisasi aplikasi...');
+            
+            // Load catatan dari localStorage
+            loadNotes();
+            
+            // Setup semua event listeners dengan BENAR
+            setupEventListeners();
+            
+            // Tampilkan catatan
+            renderNotes();
+            
+            console.log('Aplikasi siap digunakan!');
+        });
+        
+        // Setup semua event listeners
+        function setupEventListeners() {
+            console.log('Menyiapkan event listeners...');
+            
+            // 1. Tombol "Catatan Baru" - DENGAN EVENT LISTENER
+            const addButton = document.getElementById('add-note-button');
+            console.log('Tombol Catatan Baru ditemukan:', addButton);
+            
+            addButton.addEventListener('click', function() {
+                console.log('Tombol Catatan Baru DIKLIK!');
+                showAddScreen();
+            });
+            
+            // Juga tambahkan onclick untuk backup
+            addButton.onclick = function() {
+                console.log('onclick Catatan Baru dipanggil');
+                showAddScreen();
+            };
+            
+            // 2. Tombol di screen tambah/edit
+            document.getElementById('back-button').addEventListener('click', showListScreen);
+            document.getElementById('cancel-button').addEventListener('click', showListScreen);
+            document.getElementById('save-button').addEventListener('click', saveNote);
+            document.getElementById('delete-button').addEventListener('click', deleteNoteFromForm);
+            
+            // 3. Filter tags
+            document.querySelectorAll('.filter-tag').forEach(button => {
+                button.addEventListener('click', function() {
+                    const filter = this.getAttribute('data-filter');
+                    applyFilter(filter);
+                });
+            });
+            
+            // 4. Search
+            document.getElementById('search-input').addEventListener('input', function() {
+                searchNotes(this.value);
+            });
+            
+            // 5. Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    if (document.getElementById('screen-add').classList.contains('active')) {
+                        showListScreen();
+                    }
+                }
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    if (document.getElementById('screen-add').classList.contains('active')) {
+                        saveNote();
+                    }
+                }
+            });
+            
+            console.log('Semua event listeners berhasil diatur');
+        }
+        
+        // Navigasi antar screen
+        function showAddScreen() {
+            console.log('Menampilkan screen tambah catatan');
+            
+            // Reset form
+            document.getElementById('title').value = '';
+            document.getElementById('content').value = '';
+            document.getElementById('form-title').textContent = 'Catatan Baru';
+            document.getElementById('delete-button').style.display = 'none';
+            editingNoteId = null;
+            
+            // Ganti screen
+            document.getElementById('screen-list').classList.remove('active');
+            document.getElementById('screen-add').classList.add('active');
+            
+            // Fokus ke input judul
+            setTimeout(() => {
+                document.getElementById('title').focus();
+            }, 100);
+        }
+        
+        function showListScreen() {
+            console.log('Kembali ke daftar catatan');
+            document.getElementById('screen-add').classList.remove('active');
+            document.getElementById('screen-list').classList.add('active');
+            renderNotes();
+        }
+        
+        // Load/save notes
+        function loadNotes() {
+            try {
+                const saved = localStorage.getItem('my-notes-app');
+                notes = saved ? JSON.parse(saved) : [];
+                console.log('Memuat', notes.length, 'catatan dari localStorage');
+                updateStats();
+            } catch (e) {
+                console.error('Error loading notes:', e);
+                notes = [];
+            }
+        }
+        
+        function saveNotes() {
+            try {
+                localStorage.setItem('my-notes-app', JSON.stringify(notes));
+                updateStats();
+                console.log('Catatan disimpan ke localStorage');
+            } catch (e) {
+                console.error('Error saving notes:', e);
+                showToast('Gagal menyimpan catatan', 'error');
+            }
+        }
+        
+        // Render notes
+        function renderNotes(notesToShow = null) {
+            const container = document.getElementById('notes-container');
+            const emptyState = document.getElementById('empty-state');
+            
+            let displayNotes = notesToShow || notes;
+            
+            if (displayNotes.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            // Sort by date (newest first)
+            const sortedNotes = [...displayNotes].sort((a, b) => 
+                new Date(b.updatedAt) - new Date(a.updatedAt)
+            );
+            
+            container.innerHTML = sortedNotes.map(note => {
+                const shortContent = note.content.length > 150 
+                    ? note.content.substring(0, 150) + '...' 
+                    : note.content;
+                
+                const date = new Date(note.updatedAt);
+                const formattedDate = date.toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute:
