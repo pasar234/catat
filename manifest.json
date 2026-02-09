@@ -1,72 +1,16 @@
 {
-  "name": "Catatan Offline",
+  "name": "Catatan Pintar",
   "short_name": "Catatan",
   "description": "Aplikasi catatan offline untuk Android",
   "start_url": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
-  "background_color": "#2575fc",
-  "theme_color": "#2575fc",
-  "orientation": "portrait-primary",
-  "scope": "/",
-  "lang": "id-ID",
-  "categories": ["productivity", "utilities"],
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
   "icons": [
     {
       "src": "https://img.icons8.com/color/96/000000/note.png",
       "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://img.icons8.com/color/144/000000/note.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://img.icons8.com/color/192/000000/note.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "https://img.icons8.com/color/512/000000/note.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      "sizes": "800x1280",
-      "type": "image/jpeg",
-      "form_factor": "narrow",
-      "label": "Daftar Catatan"
-    },
-    {
-      "src": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      "sizes": "1280x800",
-      "type": "image/jpeg",
-      "form_factor": "wide",
-      "label": "Daftar Catatan"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Catatan Baru",
-      "short_name": "Baru",
-      "description": "Buat catatan baru",
-      "url": "/?new",
-      "icons": [{ "src": "https://img.icons8.com/color/96/000000/add.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "Daftar Catatan",
-      "short_name": "Daftar",
-      "description": "Lihat semua catatan",
-      "url": "/?list",
-      "icons": [{ "src": "https://img.icons8.com/color/96/000000/list.png", "sizes": "96x96" }]
+      "type": "image/png"
     }
   ]
 }
