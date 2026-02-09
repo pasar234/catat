@@ -2,7 +2,7 @@
   "name": "Catatan Pintar",
   "short_name": "Catatan",
   "description": "Aplikasi catatan offline untuk Android",
-  "start_url": "/",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#667eea",
@@ -10,6 +10,16 @@
     {
       "src": "https://img.icons8.com/color/96/000000/note.png",
       "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "https://img.icons8.com/color/144/000000/note.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "https://img.icons8.com/color/192/000000/note.png",
+      "sizes": "192x192",
       "type": "image/png"
     }
   ]
