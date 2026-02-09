@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catatan Offline</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .screen { display: none; }
+        .active { display: block; }
+        .note-item { border-bottom: 1px solid #ccc; padding: 10px 0; }
+        .date { font-size: 0.8em; color: gray; }
+    </style>
+</head>
+<body>
+
+    <!-- Screen 2: Daftar Catatan -->
+    <div id="screen-list" class="screen active">
+        <h2>Catatan Saya</h2>
+        <button onclick="showScreen('screen-add')">+ Tambah Baru</button>
+        <div id="list-container"></div>
+    </div>
+
+    <!-- Screen 1: Tambah Catatan -->
+    <div id="screen-add" class="screen">
+        <h2>Tambah Catatan</h2>
+        <input type="text" id="title" placeholder="Judul"><br><br>
+        <textarea id="content" placeholder="Isi catatan"></textarea><br><br>
+        <button onclick="saveNote()">Simpan</button>
+        <button onclick="showScreen('screen-list')">Batal</button>
+    </div>
+
+    <script>
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(id === 'screen-list') renderNotes();
+        }
+
+        function saveNote() {
+            const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+            const newNote = {
+                title: document.getElementById('title').value,
+                content: document.getElementById('content').value,
+                date: new Date().toLocaleString('id-ID') // Fitur Tanggal
+            };
+            notes.push(newNote);
+            localStorage.setItem('notes', JSON.stringify(notes));
+            showScreen('screen-list');
+        }
+
+        function renderNotes() {
+            const container = document.getElementById('list-container');
+            const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+            container.innerHTML = notes.map(n => `
+                <div class="note-item">
+                    <strong>${n.title}</strong><br>${n.content}<br>
+                    <span class="date">${n.date}</span>
+                </div>
+            `).join('');
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+        renderNotes();
+    </script>
+</body>
+</html>
