@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <!-- VIEWPORT UNTUK TABLET -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Catatan Pintar</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* RESET UNTUK TABLET */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        /* Pastikan elemen yang perlu bisa dipilih */
+        input, textarea, [contenteditable] {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+        
+        /* Container utama untuk tablet */
+        .app-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header untuk tablet */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 25px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+            margin-bottom: 12px;
+        }
+        
+        .status-online {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.25);
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Konten utama */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .screen {
+            display: none;
+            padding: 25px;
+            height: 100%;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Screen 1: Daftar Catatan - OPTIMIZED FOR TABLET */
+        .search-box {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 18px 55px 18px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 18px;
+            background: #f8f9fa;
+            transition: all 0.3s;
+            min-height: 60px;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        .search-box i {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 22px;
+        }
+        
+        /* Filter tags untuk tablet */
+        .filter-tags {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        
+        .filter-tags::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .filter-tag {
+            padding: 14px 24px;
+            background: #f0f0f0;
+            border-radius: 30px;
+            font-size: 16px;
+            white-space: nowrap;
+            border: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            min-width: 120px;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .filter-tag.active {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        /* TOMBOL CATATAN BARU - OPTIMIZED FOR TABLET TOUCH */
+        .btn-new-note {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 22px;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: 700;
+            width: 100%;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            cursor: pointer;
+            min-height: 70px;
+        }
+        
+        /* Efek untuk touch di tablet */
+        .btn-new-note:active {
+            transform: scale(0.98);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-new-note:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+        }
+        
+        /* Notes container untuk tablet */
+        .notes-container {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        /* Grid responsive untuk tablet */
+        @media (min-width: 768px) {
+            .notes-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .notes-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .note-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #f0f0f0;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .note-card:active {
+            transform: scale(0.98);
+        }
+        
+        .note-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .note-card.pinned {
+            border-left: 6px solid #FF9800;
+            background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
+        }
+        
+        .note-card h3 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        
+        .note-content {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 16px;
+            line-height: 1.5;
+            max-height: 100px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .note-content::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(to bottom, transparent, white);
+        }
+        
+        .note-date {
+            color: #888;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .note-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 50px;
+        }
+        
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .action-btn.edit {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .action-btn.delete {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .action-btn.pin {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        /* Empty state untuk tablet */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #999;
+        }
+        
+        .empty-state i {
+            font-size: 80px;
+            margin-bottom: 25px;
+            color: #e0e0e0;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .empty-state p {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        
+        /* Screen 2: Tambah/Edit Catatan */
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-header h2 {
+            color: #333;
+            font-size: 26px;
+            font-weight: 600;
+        }
+        
+        .btn-back {
+            background: #f0f0f0;
+            border: none;
+            padding: 14px 22px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            min-height: 55px;
+        }
+        
+        .btn-back:active {
+            background: #e0e0e0;
+            transform: scale(0.95);
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 12px;
+            color: #333;
+            font-weight: 600;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 18px;
+            font-family: inherit;
+            transition: all 0.3s;
+            min-height: 65px;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea.form-input {
+            min-height: 250px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+        
+        /* Button group untuk tablet */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .button-group button {
+            flex: 1;
+            min-width: 150px;
+            padding: 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 65px;
+        }
+        
+        .button-group button:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+            color: white;
+        }
+        
+        .btn-cancel {
+            background: linear-gradient(135deg, #757575 0%, #424242 100%);
+            color: white;
+        }
+        
+        /* Status Bar untuk tablet */
+        .status-bar {
+            padding: 20px 25px;
+            background: #f8f9fa;
+            border-top: 2px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .stats {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        
+        /* Toast notification untuk tablet */
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: white;
+            padding: 20px 35px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s;
+            font-size: 18px;
+            font-weight: 500;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        .toast.success {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        }
+        
+        .toast.error {
+            background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+        }
+        
+        .toast.info {
+            background: linear-gradient(135deg, #2196F3 0%, #0D47A1 100%);
+        }
+        
+        /* Fix untuk input touch di tablet */
+        input, textarea, button, select {
+            font-size: 16px; /* Mencegah zoom otomatis di iOS */
+        }
+        
+        /* Touch-friendly styles */
+        @media (hover: none) and (pointer: coarse) {
+            /* Untuk perangkat touch-only */
+            .btn-new-note:hover, .action-btn:hover, .btn-back:hover {
+                transform: none;
+            }
+            
+            .note-card:hover {
+                border-color: #f0f0f0;
+                box-shadow: none;
+            }
+            
+            /* Perbesar area touch untuk tombol kecil */
+            .action-btn {
+                padding: 15px;
+                min-height: 55px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-book"></i> Catatan Pintar</h1>
+            <p>Aplikasi Catatan Offline untuk Tablet</p>
+            <div class="status-online">
+                <i class="fas fa-wifi"></i> <span>Online</span>
+            </div>
+        </div>
+        
+        <!-- Konten Utama -->
+        <div class="content">
+            <!-- Screen 1: Daftar Catatan -->
+            <div id="screen-list" class="screen active">
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="Cari catatan...">
+                    <i class="fas fa-search"></i>
+                </div>
+                
+                <div class="filter-tags">
+                    <button class="filter-tag active" data-filter="all">Semua</button>
+                    <button class="filter-tag" data-filter="pinned">📌 Disematkan</button>
+                    <button class="filter-tag" data-filter="recent">🕒 Terbaru</button>
+                    <button class="filter-tag" data-filter="important">⭐ Penting</button>
+                </div>
+                
+                <!-- TOMBOL UTAMA - DIOPTIMALKAN UNTUK TABLET -->
+                <button class="btn-new-note" id="add-note-button">
+                    <i class="fas fa-plus-circle"></i> TAMBAH CATATAN BARU
+                </button>
+                
+                <div id="notes-container" class="notes-container">
+                    <!-- Catatan akan dimuat di sini -->
+                </div>
+                
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>Belum Ada Catatan</h3>
+                    <p>Mulai dengan membuat catatan pertama Anda</p>
+                    <button class="btn-new-note" style="margin-top: 30px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                        <i class="fas fa-plus-circle"></i> BUAT CATATAN PERTAMA
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Screen 2: Tambah/Edit Catatan -->
+            <div id="screen-add" class="screen">
+                <div class="form-header">
+                    <h2 id="form-title">Catatan Baru</h2>
+                    <button class="btn-back" id="back-button">
+                        <i class="fas fa-arrow-left"></i> KEMBALI
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="title"><i class="fas fa-heading"></i> JUDUL CATATAN</label>
+                    <input type="text" id="title" class="form-input" placeholder="Masukkan judul catatan" maxlength="100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="content"><i class="fas fa-edit"></i> ISI CATATAN</label>
+                    <textarea id="content" class="form-input" placeholder="Tulis isi catatan di sini..." rows="10"></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-save" id="save-button">
+                        <i class="fas fa-save"></i> SIMPAN
+                    </button>
+                    <button class="btn-delete" id="delete-button" style="display: none;">
+                        <i class="fas fa-trash"></i> HAPUS
+                    </button>
+                    <button class="btn-cancel" id="cancel-button">
+                        <i class="fas fa-times"></i> BATAL
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="stats">
+                <div class="stat-item">
+                    <i class="fas fa-sticky-note"></i>
+                    <span id="note-count">0 catatan</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-thumbtack"></i>
+                    <span id="pinned-count">0 disematkan</span>
+                </div>
+            </div>
+            <div id="last-sync" class="stat-item">
+                <i class="fas fa-clock"></i>
+                <span>Baru saja</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toast-message">Catatan berhasil disimpan!</span>
+    </div>
+
+    <script>
+        // ============================================
+        // APLIKASI CATATAN UNTUK TABLET
+       
