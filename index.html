@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penerjemah Indonesia - Inggris - Arab</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome untuk ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-language"></i> Penerjemah Bahasa</h1>
+            <p>Indonesia - Inggris - Arab</p>
+        </header>
+
+        <div class="translator-container">
+            <!-- Bagian input -->
+            <div class="input-section">
+                <div class="language-header">
+                    <span class="language-label">Bahasa Indonesia</span>
+                    <button class="clear-btn" id="clearBtn" title="Hapus teks">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <textarea 
+                    id="inputText" 
+                    placeholder="Masukkan teks dalam bahasa Indonesia..."
+                    rows="6"
+                ></textarea>
+                <div class="char-counter" id="charCounter">0 karakter</div>
+            </div>
+
+            <!-- Tombol kontrol -->
+            <div class="control-buttons">
+                <button class="translate-btn" id="translateBtn">
+                    <i class="fas fa-arrow-right"></i> Terjemahkan
+                </button>
+                <button class="swap-btn" id="swapBtn" title="Tukar bahasa target">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+            </div>
+
+            <!-- Bagian output Inggris -->
+            <div class="output-section">
+                <div class="language-header">
+                    <span class="language-label">Bahasa Inggris</span>
+                    <button class="copy-btn" id="copyEnglishBtn" title="Salin teks">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+                <div class="output-box" id="englishOutput">
+                    <p class="placeholder">Hasil terjemahan Inggris akan muncul di sini...</p>
+                </div>
+            </div>
+
+            <!-- Bagian output Arab -->
+            <div class="output-section arabic-section">
+                <div class="language-header">
+                    <span class="language-label">Bahasa Arab</span>
+                    <button class="copy-btn" id="copyArabicBtn" title="Salin teks">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+                <div class="output-box arabic-text" id="arabicOutput">
+                    <p class="placeholder">نتيجة الترجمة العربية ستظهر هنا...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fitur tambahan -->
+        <div class="extra-features">
+            <button class="feature-btn" id="speakIndonesian">
+                <i class="fas fa-volume-up"></i> Dengarkan Indonesia
+            </button>
+            <button class="feature-btn" id="speakEnglish">
+                <i class="fas fa-volume-up"></i> Dengarkan Inggris
+            </button>
+            <button class="feature-btn" id="speakArabic">
+                <i class="fas fa-volume-up"></i> Dengarkan Arab
+            </button>
+        </div>
+
+        <!-- Catatan -->
+        <div class="note">
+            <p><i class="fas fa-info-circle"></i> Catatan: Aplikasi ini menggunakan API terjemahan. Pastikan terhubung ke internet.</p>
+            <p class="api-status" id="apiStatus">Status: Siap</p>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="translator.js"></script>
+</body>
+</html>
