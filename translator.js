@@ -1,12 +1,10 @@
 // State aplikasi
 let currentTargetLang = 'en';
 let isTranslating = false;
+let isSpeaking = false;
 let currentUtterance = null;
-let isSpeaking = {
-    id: false,
-    en: false,
-    ar: false
-};
+let speechSupported = false;
+let voicesLoaded = false;
 
 // Elemen DOM
 const inputText = document.getElementById('inputText');
@@ -26,34 +24,51 @@ const apiStatus = document.getElementById('apiStatus');
 // Inisialisasi
 document.addEventListener('DOMContentLoaded', () => {
     checkAPIStatus();
-    initSpeechSynthesis();
+    checkSpeechSupport();
 });
 
-// Inisialisasi speech synthesis
-function initSpeechSynthesis() {
-    if (!('speechSynthesis' in window)) {
+// CEK DUKUNGAN SPEECH
+function checkSpeechSupport() {
+    if ('speechSynthesis' in window) {
+        speechSupported = true;
+        console.log('✅ Speech synthesis didukung');
+        
+        // Load voices
+        loadVoices();
+        
+        // Event listener untuk voices changed
+        window.speechSynthesis.onvoiceschanged = function() {
+            console.log('🔄 Voices berubah, total:', speechSynthesis.getVoices().length);
+            voicesLoaded = true;
+        };
+    } else {
+        speechSupported = false;
+        console.log('❌ Speech synthesis TIDAK didukung');
         showToast('Browser Anda tidak mendukung text-to-speech', 'error');
         disableSpeechButtons();
-        return;
     }
+}
 
-    // Tunggu voices dimuat
-    if (speechSynthesis.getVoices().length === 0) {
-        speechSynthesis.addEventListener('voiceschanged', () => {
-            console.log('Voices loaded:', speechSynthesis.getVoices().length);
+// LOAD VOICES
+function loadVoices() {
+    if (!speechSupported) return;
+    
+    const voices = window.speechSynthesis.getVoices();
+    console.log('🎤 Voices tersedia:', voices.length);
+    
+    if (voices.length > 0) {
+        voicesLoaded = true;
+        voices.forEach(v => {
+            console.log(`- ${v.name} (${v.lang})`);
         });
     }
-
-    // Bersihkan speech saat halaman ditutup
-    window.addEventListener('beforeunload', () => {
-        stopAllSpeech();
-    });
 }
 
 // Nonaktifkan tombol speech
 function disableSpeechButtons() {
     [speakIndonesian, speakEnglish, speakArabic].forEach(btn => {
         btn.disabled = true;
+        btn.style.opacity = '0.5';
         btn.title = 'Tidak didukung di browser ini';
     });
 }
@@ -67,210 +82,262 @@ swapBtn.addEventListener('click', swapLanguages);
 copyEnglishBtn.addEventListener('click', () => copyToClipboard('english'));
 copyArabicBtn.addEventListener('click', () => copyToClipboard('arabic'));
 
-// Event listeners untuk speech - VERSI PERBAIKAN
-speakIndonesian.addEventListener('click', function() {
+// SPEECH INDONESIA - VERSI SEDERHANA DAN PASTI JALAN
+speakIndonesian.addEventListener('click', function(e) {
+    e.preventDefault();
     const text = inputText.value.trim();
+    
     if (!text) {
         showToast('Tidak ada teks Indonesia untuk dibacakan', 'warning');
         return;
     }
-    toggleSpeech(text, 'id', 'Indonesia');
+    
+    // Cek dukungan
+    if (!speechSupported) {
+        showToast('Browser tidak mendukung text-to-speech', 'error');
+        return;
+    }
+    
+    // Jika sedang berbicara, hentikan
+    if (isSpeaking) {
+        stopSpeech();
+        return;
+    }
+    
+    // Batasi teks (maks 150 karakter)
+    let textToSpeak = text;
+    if (text.length > 150) {
+        textToSpeak = text.substring(0, 150) + '...';
+        showToast('Teks dipotong (maks 150 karakter)', 'warning');
+    }
+    
+    // Buat utterance dengan konfigurasi sederhana
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    
+    // Set bahasa Indonesia
+    utterance.lang = 'id-ID';
+    utterance.rate = 0.9; // Sedikit lebih lambat
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    // Event handlers
+    utterance.onstart = function() {
+        isSpeaking = true;
+        updateAllSpeechButtons(true);
+        console.log('🔊 Mulai bicara Indonesia');
+    };
+    
+    utterance.onend = function() {
+        isSpeaking = false;
+        updateAllSpeechButtons(false);
+        console.log('🔇 Selesai bicara');
+    };
+    
+    utterance.onerror = function(event) {
+        console.error('❌ Speech error:', event);
+        isSpeaking = false;
+        updateAllSpeechButtons(false);
+        
+        // Coba metode alternatif
+        fallbackSpeak(textToSpeak, 'id');
+    };
+    
+    // Hentikan yang sedang berjalan
+    window.speechSynthesis.cancel();
+    
+    // Mulai bicara
+    try {
+        window.speechSynthesis.speak(utterance);
+        currentUtterance = utterance;
+    } catch (error) {
+        console.error('Gagal memulai speech:', error);
+        showToast('Gagal memulai text-to-speech', 'error');
+    }
 });
 
-speakEnglish.addEventListener('click', function() {
+// SPEECH INGGRIS
+speakEnglish.addEventListener('click', function(e) {
+    e.preventDefault();
     const text = getEnglishText();
+    
     if (!text) {
         showToast('Tidak ada teks Inggris untuk dibacakan', 'warning');
         return;
     }
-    toggleSpeech(text, 'en', 'Inggris');
+    
+    if (!speechSupported) {
+        showToast('Browser tidak mendukung text-to-speech', 'error');
+        return;
+    }
+    
+    if (isSpeaking) {
+        stopSpeech();
+        return;
+    }
+    
+    let textToSpeak = text;
+    if (text.length > 150) {
+        textToSpeak = text.substring(0, 150) + '...';
+        showToast('Teks dipotong (maks 150 karakter)', 'warning');
+    }
+    
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    utterance.onstart = function() {
+        isSpeaking = true;
+        updateAllSpeechButtons(true);
+        console.log('🔊 Mulai bicara Inggris');
+    };
+    
+    utterance.onend = function() {
+        isSpeaking = false;
+        updateAllSpeechButtons(false);
+    };
+    
+    utterance.onerror = function(event) {
+        console.error('❌ Speech error:', event);
+        isSpeaking = false;
+        updateAllSpeechButtons(false);
+        fallbackSpeak(textToSpeak, 'en');
+    };
+    
+    window.speechSynthesis.cancel();
+    
+    try {
+        window.speechSynthesis.speak(utterance);
+        currentUtterance = utterance;
+    } catch (error) {
+        console.error('Gagal memulai speech:', error);
+        showToast('Gagal memulai text-to-speech', 'error');
+    }
 });
 
-speakArabic.addEventListener('click', function() {
+// SPEECH ARAB
+speakArabic.addEventListener('click', function(e) {
+    e.preventDefault();
     const text = getArabicText();
+    
     if (!text) {
         showToast('Tidak ada teks Arab untuk dibacakan', 'warning');
         return;
     }
-    toggleSpeech(text, 'ar', 'Arab');
-});
-
-// Fungsi toggle speech (play/stop)
-function toggleSpeech(text, lang, langName) {
-    // Jika sedang berbicara di bahasa yang sama, hentikan
-    if (isSpeaking[lang]) {
-        stopSpeech(lang);
-        return;
-    }
     
-    // Hentikan semua speech yang sedang berlangsung
-    stopAllSpeech();
-    
-    // Mulai speech baru
-    speakText(text, lang, langName);
-}
-
-// Fungsi utama text-to-speech - VERSI PERBAIKAN
-function speakText(text, lang, langName) {
-    if (!('speechSynthesis' in window)) {
+    if (!speechSupported) {
         showToast('Browser tidak mendukung text-to-speech', 'error');
         return;
     }
-
-    // Batasi teks jika terlalu panjang
-    const maxLength = 200;
-    let textToSpeak = text;
-    if (text.length > maxLength) {
-        textToSpeak = text.substring(0, maxLength) + '...';
-        showToast(`Teks terlalu panjang, hanya ${maxLength} karakter pertama yang dibacakan`, 'warning');
-    }
-
-    // Buat utterance baru
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    currentUtterance = utterance;
     
-    // Set bahasa
-    switch(lang) {
-        case 'id':
-            utterance.lang = 'id-ID';
-            break;
-        case 'en':
-            utterance.lang = 'en-US';
-            break;
-        case 'ar':
-            utterance.lang = 'ar-SA';
-            break;
-        default:
-            utterance.lang = 'id-ID';
+    if (isSpeaking) {
+        stopSpeech();
+        return;
     }
-
-    // Set kecepatan dan nada
-    utterance.rate = 0.9;
+    
+    let textToSpeak = text;
+    if (text.length > 150) {
+        textToSpeak = text.substring(0, 150) + '...';
+        showToast('Teks dipotong (maks 150 karakter)', 'warning');
+    }
+    
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.lang = 'ar-SA';
+    utterance.rate = 0.8; // Lebih lambat untuk Arab
     utterance.pitch = 1;
     utterance.volume = 1;
-
-    // Pilih voice yang sesuai
-    const voice = selectVoice(lang);
-    if (voice) {
-        utterance.voice = voice;
-    }
-
-    // Event handlers
-    utterance.onstart = () => {
-        isSpeaking[lang] = true;
-        updateSpeechButton(lang, true);
-        console.log(`Mulai membaca ${langName}`);
+    
+    utterance.onstart = function() {
+        isSpeaking = true;
+        updateAllSpeechButtons(true);
+        console.log('🔊 Mulai bicara Arab');
     };
-
-    utterance.onend = () => {
-        isSpeaking[lang] = false;
-        updateSpeechButton(lang, false);
-        currentUtterance = null;
-        console.log(`Selesai membaca ${langName}`);
+    
+    utterance.onend = function() {
+        isSpeaking = false;
+        updateAllSpeechButtons(false);
     };
-
-    utterance.onerror = (event) => {
-        console.error(`Error membaca ${langName}:`, event);
-        isSpeaking[lang] = false;
-        updateSpeechButton(lang, false);
-        currentUtterance = null;
-        
-        // Tampilkan pesan error yang lebih informatif
-        if (event.error === 'not-allowed') {
-            showToast('Izin microphone diperlukan untuk text-to-speech', 'error');
-        } else if (event.error === 'interrupted') {
-            // Normal, diabaikan
-        } else {
-            showToast(`Gagal membaca teks ${langName}`, 'error');
-        }
+    
+    utterance.onerror = function(event) {
+        console.error('❌ Speech error:', event);
+        isSpeaking = false;
+        updateAllSpeechButtons(false);
+        fallbackSpeak(textToSpeak, 'ar');
     };
-
-    // Mulai berbicara
+    
+    window.speechSynthesis.cancel();
+    
     try {
-        window.speechSynthesis.cancel(); // Hentikan yang sedang berjalan
         window.speechSynthesis.speak(utterance);
+        currentUtterance = utterance;
     } catch (error) {
-        console.error('Speech error:', error);
+        console.error('Gagal memulai speech:', error);
         showToast('Gagal memulai text-to-speech', 'error');
     }
-}
+});
 
-// Pilih voice yang sesuai
-function selectVoice(lang) {
-    const voices = window.speechSynthesis.getVoices();
-    if (!voices || voices.length === 0) return null;
-
-    // Prioritaskan voice berdasarkan bahasa
-    const langCodes = {
-        'id': ['id-ID', 'ms-MY', 'Indonesian'],
-        'en': ['en-US', 'en-GB', 'en-AU', 'English'],
-        'ar': ['ar-SA', 'ar-EG', 'Arabic']
-    };
-
-    // Cari voice yang cocok
-    for (const code of langCodes[lang]) {
-        const voice = voices.find(v => 
-            v.lang.includes(code) || v.name.includes(code)
-        );
-        if (voice) return voice;
+// FALLBACK SPEECH - menggunakan metode alternatif
+function fallbackSpeak(text, lang) {
+    console.log('Mencoba fallback speech untuk', lang);
+    
+    // Metode 1: Gunakan responsivevoice (jika tersedia)
+    if (typeof responsiveVoice !== 'undefined') {
+        if (lang === 'id') responsiveVoice.speak(text, 'Indonesian Female');
+        else if (lang === 'en') responsiveVoice.speak(text, 'UK English Female');
+        else if (lang === 'ar') responsiveVoice.speak(text, 'Arabic Male');
+        return;
     }
-
-    // Fallback: voice pertama dengan bahasa yang mendekati
-    const fallback = voices.find(v => v.lang.includes(lang));
-    if (fallback) return fallback;
-
-    // Fallback terakhir: voice default
-    return voices[0];
-}
-
-// Update tampilan tombol speech
-function updateSpeechButton(lang, isActive) {
-    const buttons = {
-        'id': speakIndonesian,
-        'en': speakEnglish,
-        'ar': speakArabic
-    };
-
-    const labels = {
-        'id': 'Indonesia',
-        'en': 'Inggris',
-        'ar': 'Arab'
-    };
-
-    const button = buttons[lang];
-    if (!button) return;
-
-    if (isActive) {
-        button.classList.add('speaking');
-        button.innerHTML = '<i class="fas fa-stop"></i> Berhenti';
-        button.title = `Klik untuk berhenti`;
-    } else {
-        button.classList.remove('speaking');
-        button.innerHTML = `<i class="fas fa-volume-up"></i> Dengarkan ${labels[lang]}`;
-        button.title = `Dengarkan bahasa ${labels[lang]}`;
-    }
-}
-
-// Hentikan speech di bahasa tertentu
-function stopSpeech(lang) {
-    if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-    }
-    isSpeaking[lang] = false;
-    updateSpeechButton(lang, false);
-    currentUtterance = null;
+    
+    // Metode 2: Coba lagi dengan konfigurasi berbeda
+    setTimeout(() => {
+        try {
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            if (lang === 'id') utterance.lang = 'ms-MY'; // Coba Malaysia
+            else if (lang === 'en') utterance.lang = 'en-GB';
+            else if (lang === 'ar') utterance.lang = 'ar-EG';
+            
+            utterance.rate = 0.8;
+            
+            window.speechSynthesis.speak(utterance);
+        } catch (e) {
+            showToast('Tidak dapat membaca teks', 'error');
+        }
+    }, 500);
 }
 
 // Hentikan semua speech
-function stopAllSpeech() {
+function stopSpeech() {
     if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
     }
-    isSpeaking = { id: false, en: false, ar: false };
-    updateSpeechButton('id', false);
-    updateSpeechButton('en', false);
-    updateSpeechButton('ar', false);
+    isSpeaking = false;
+    updateAllSpeechButtons(false);
     currentUtterance = null;
+    console.log('⏹️ Speech dihentikan');
+}
+
+// Update semua tombol speech
+function updateAllSpeechButtons(isActive) {
+    const buttons = [speakIndonesian, speakEnglish, speakArabic];
+    
+    buttons.forEach(btn => {
+        if (isActive) {
+            btn.classList.add('speaking');
+            btn.innerHTML = '<i class="fas fa-stop"></i> Berhenti';
+        } else {
+            btn.classList.remove('speaking');
+            // Kembalikan teks asli
+            if (btn.id === 'speakIndonesian') {
+                btn.innerHTML = '<i class="fas fa-volume-up"></i> Dengarkan Indonesia';
+            } else if (btn.id === 'speakEnglish') {
+                btn.innerHTML = '<i class="fas fa-volume-up"></i> Dengarkan Inggris';
+            } else if (btn.id === 'speakArabic') {
+                btn.innerHTML = '<i class="fas fa-volume-up"></i> Dengarkan Arab';
+            }
+        }
+    });
 }
 
 // Update karakter counter
@@ -292,7 +359,7 @@ function clearInput() {
     englishOutput.innerHTML = '<p class="placeholder">Hasil terjemahan Inggris akan muncul di sini...</p>';
     arabicOutput.innerHTML = '<p class="placeholder">نتيجة الترجمة العربية ستظهر هنا...</p>';
     updateCharCounter();
-    stopAllSpeech();
+    stopSpeech();
     showToast('Teks telah dihapus', 'success');
 }
 
@@ -321,18 +388,15 @@ async function translate() {
     
     isTranslating = true;
     showLoading();
-    stopAllSpeech();
+    stopSpeech();
     
     try {
-        // Tampilkan loading di output
         englishOutput.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
         arabicOutput.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
         
-        // Terjemahkan ke Inggris
         const englishResult = await translateText(text, 'en');
         updateOutput(englishOutput, englishResult);
         
-        // Terjemahkan ke Arab
         const arabicResult = await translateText(text, 'ar');
         updateOutput(arabicOutput, arabicResult, true);
         
@@ -353,7 +417,6 @@ async function translate() {
 // Fungsi untuk memanggil API terjemahan
 async function translateText(text, targetLang) {
     try {
-        // Gunakan MyMemory Translation API
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=id|${targetLang}`;
         
         const controller = new AbortController();
@@ -371,7 +434,6 @@ async function translateText(text, targetLang) {
         }
     } catch (error) {
         console.log('API Error, using fallback:', error);
-        // Fallback translation
         return getFallbackTranslation(text, targetLang);
     }
 }
@@ -400,31 +462,21 @@ function getFallbackTranslation(text, targetLang) {
         'selamat jalan': { en: 'Goodbye', ar: 'مع السلامة' },
         'sampai jumpa': { en: 'See you', ar: 'أراك لاحقا' },
         'saya cinta kamu': { en: 'I love you', ar: 'أحبك' },
-        'aku cinta kamu': { en: 'I love you', ar: 'أحبك' },
-        'siapa nama kamu': { en: 'What is your name?', ar: 'ما اسمك؟' },
-        'nama saya': { en: 'My name is', ar: 'اسمي' },
-        'selamat datang': { en: 'Welcome', ar: 'أهلا وسهلا' },
-        'hati hati': { en: 'Take care', ar: 'اعتن بنفسك' },
-        'cepat sembuh': { en: 'Get well soon', ar: 'سلامات' },
-        'selamat ulang tahun': { en: 'Happy birthday', ar: 'عيد ميلاد سعيد' },
-        'selamat tahun baru': { en: 'Happy new year', ar: 'سنة جديدة سعيدة' }
+        'aku cinta kamu': { en: 'I love you', ar: 'أحبك' }
     };
     
     const lowerText = text.toLowerCase().trim();
     
-    // Cek exact match
     if (dictionary[lowerText]) {
         return dictionary[lowerText][targetLang];
     }
     
-    // Cek partial match
     for (const [key, value] of Object.entries(dictionary)) {
         if (lowerText.includes(key)) {
             return `${value[targetLang]} (${text})`;
         }
     }
     
-    // Jika tidak ditemukan
     const prefix = targetLang === 'en' ? '[English]' : '[Arabic]';
     return `${prefix} ${text}`;
 }
@@ -439,14 +491,14 @@ function updateOutput(element, text, isArabic = false) {
     element.innerHTML = `<p>${escapeHtml(text)}</p>`;
 }
 
-// Escape HTML untuk keamanan
+// Escape HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-// Copy ke clipboard - VERSI PERBAIKAN
+// Copy ke clipboard
 function copyToClipboard(target) {
     let text = '';
     let language = '';
@@ -464,13 +516,11 @@ function copyToClipboard(target) {
         return;
     }
     
-    // Gunakan Clipboard API modern
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text)
             .then(() => {
                 showToast(`✓ Teks ${language} berhasil disalin!`, 'success');
                 
-                // Animasi tombol copy
                 const btn = target === 'english' ? copyEnglishBtn : copyArabicBtn;
                 btn.style.transform = 'scale(1.2)';
                 btn.style.color = '#28a745';
@@ -480,16 +530,14 @@ function copyToClipboard(target) {
                 }, 200);
             })
             .catch(() => {
-                // Fallback ke metode lama
                 copyTextFallback(text, language);
             });
     } else {
-        // Fallback untuk browser lama
         copyTextFallback(text, language);
     }
 }
 
-// Fallback copy untuk browser lama
+// Fallback copy
 function copyTextFallback(text, language) {
     const textarea = document.createElement('textarea');
     textarea.value = text;
@@ -498,7 +546,6 @@ function copyTextFallback(text, language) {
     textarea.style.left = '-9999px';
     document.body.appendChild(textarea);
     textarea.select();
-    textarea.setSelectionRange(0, 99999);
     
     try {
         const success = document.execCommand('copy');
@@ -519,16 +566,12 @@ function copyTextFallback(text, language) {
 function getEnglishText() {
     const p = englishOutput.querySelector('p');
     if (!p || p.classList.contains('placeholder')) return '';
-    
-    // Ambil teks tanpa tag HTML
     return p.textContent || '';
 }
 
 function getArabicText() {
     const p = arabicOutput.querySelector('p');
     if (!p || p.classList.contains('placeholder')) return '';
-    
-    // Ambil teks tanpa tag HTML
     return p.textContent || '';
 }
 
@@ -543,19 +586,16 @@ function hideLoading() {
     translateBtn.disabled = false;
 }
 
-// Toast notification - VERSI PERBAIKAN
+// Toast notification
 function showToast(message, type = 'info') {
-    // Hapus toast yang sudah ada
     const existingToast = document.querySelector('.toast');
     if (existingToast) {
         existingToast.remove();
     }
     
-    // Buat toast baru
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     
-    // Tambah icon sesuai tipe
     let icon = 'fa-info-circle';
     if (type === 'success') icon = 'fa-check-circle';
     if (type === 'error') icon = 'fa-exclamation-circle';
@@ -564,15 +604,10 @@ function showToast(message, type = 'info') {
     toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
     document.body.appendChild(toast);
     
-    // Trigger reflow
-    toast.offsetHeight;
-    
-    // Tampilkan toast
     setTimeout(() => {
         toast.classList.add('show');
     }, 10);
     
-    // Hapus setelah 3 detik
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => {
@@ -602,13 +637,11 @@ async function checkAPIStatus() {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-    // Ctrl+Enter untuk translate
     if (e.ctrlKey && e.key === 'Enter') {
         e.preventDefault();
         translate();
     }
     
-    // Escape untuk clear
     if (e.key === 'Escape' && !e.ctrlKey && !e.altKey && !e.shiftKey) {
         const activeElement = document.activeElement;
         if (activeElement === inputText || activeElement.tagName !== 'TEXTAREA') {
@@ -617,20 +650,10 @@ document.addEventListener('keydown', (e) => {
         }
     }
     
-    // Ctrl+Shift+S untuk stop speech
     if (e.ctrlKey && e.shiftKey && e.key === 'S') {
         e.preventDefault();
-        stopAllSpeech();
+        stopSpeech();
         showToast('Speech dihentikan', 'info');
-    }
-    
-    // Ctrl+C untuk copy (akan ditangani browser secara default)
-    // Tapi kita tambahkan notifikasi
-    if (e.ctrlKey && e.key === 'c') {
-        const selection = window.getSelection().toString();
-        if (selection) {
-            showToast('Teks dipilih, gunakan tombol copy untuk menyalin', 'info');
-        }
     }
 });
 
@@ -649,8 +672,10 @@ arabicOutput.addEventListener('dblclick', () => {
     }
 });
 
-// Prevent multiple speech instances
-window.addEventListener('blur', () => {
-    // Hentikan speech saat pindah tab
-    stopAllSpeech();
+// Hentikan speech saat pindah halaman
+window.addEventListener('beforeunload', () => {
+    stopSpeech();
 });
+
+// Test speech di console (untuk debugging)
+console.log('📢 Aplikasi siap, speech supported:', speechSupported);
