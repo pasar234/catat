@@ -5,21 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Penerjemah Indonesia - Inggris - Arab</title>
     
-    <!-- CSS utama - LETAKKAN DISINI -->
+    <!-- Meta tags untuk SEO dan responsive -->
+    <meta name="description" content="Aplikasi penerjemah bahasa Indonesia ke Inggris dan Arab online dengan fitur text-to-speech">
+    <meta name="keywords" content="penerjemah, translator, indonesia, inggris, arab, bahasa, text to speech">
+    <meta name="author" content="Your Name">
+    
+    <!-- Force reload voices untuk speech synthesis -->
+    <script>
+        // Inisialisasi speech synthesis ASAP
+        (function() {
+            if ('speechSynthesis' in window) {
+                console.log('🚀 Memuat voices...');
+                // Paksa load voices
+                window.speechSynthesis.getVoices();
+                
+                // Coba lagi setelah beberapa saat
+                setTimeout(function() {
+                    window.speechSynthesis.getVoices();
+                    console.log('✅ Voices dimuat:', window.speechSynthesis.getVoices().length);
+                }, 500);
+            } else {
+                console.warn('❌ Speech synthesis tidak didukung');
+            }
+        })();
+    </script>
+    
+    <!-- CSS utama -->
     <link rel="stylesheet" href="style.css">
     
     <!-- Font Awesome untuk ikon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <!-- Font untuk Arab (opsional) -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri&family=Scheherazade&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Scheherazade:wght@400;700&display=swap">
     
-    <!-- Meta tags untuk SEO dan responsive -->
-    <meta name="description" content="Aplikasi penerjemah bahasa Indonesia ke Inggris dan Arab online">
-    <meta name="keywords" content="penerjemah, translator, indonesia, inggris, arab, bahasa">
-    <meta name="author" content="Your Name">
+    <!-- Fallback untuk responsive voice jika speech synthesis bawaan gagal -->
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=YOUR_API_KEY"></script>
+    
+    <style>
+        /* Debug info - bisa dihapus setelah production */
+        #debug-info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: #0f0;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 9999;
+            display: none; /* Sembunyikan secara default */
+        }
+    </style>
 </head>
 <body>
+    <!-- Debug info (sembunyikan, bisa dimunculkan dengan console) -->
+    <div id="debug-info"></div>
+
     <div class="container">
         <header>
             <h1><i class="fas fa-language"></i> Penerjemah Bahasa</h1>
@@ -46,7 +88,7 @@
                 </div>
                 <textarea 
                     id="inputText" 
-                    placeholder="Masukkan teks dalam bahasa Indonesia..."
+                    placeholder="Masukkan teks dalam bahasa Indonesia (contoh: halo, selamat pagi, terima kasih)..."
                     rows="6"
                 ></textarea>
                 <div class="char-counter" id="charCounter">0 karakter</div>
@@ -102,11 +144,22 @@
             </button>
         </div>
 
+        <!-- Tombol test speech (untuk debugging) -->
+        <div style="text-align: center; margin-top: 10px; display: none;" id="debugButtons">
+            <button class="feature-btn" id="testSpeech" style="background: #28a745; color: white;">
+                <i class="fas fa-microphone-alt"></i> Test Speech
+            </button>
+        </div>
+
         <!-- Catatan -->
         <div class="note">
             <p><i class="fas fa-info-circle"></i> Catatan: Aplikasi ini menggunakan API terjemahan. Pastikan terhubung ke internet.</p>
             <p class="api-status" id="apiStatus">
                 <i class="fas fa-wifi"></i> Status: Siap
+            </p>
+            <p style="font-size: 0.9em; margin-top: 10px; color: #666;">
+                <i class="fas fa-volume-up"></i> 
+                <span id="speechStatus">Status Speech: Memeriksa...</span>
             </p>
         </div>
     </div>
@@ -114,5 +167,95 @@
     <!-- JavaScript - letakkan di akhir sebelum tutup body -->
     <script src="config.js"></script>
     <script src="translator.js"></script>
+    
+    <!-- Script tambahan untuk memastikan speech bekerja -->
+    <script>
+        (function() {
+            // Tampilkan status speech di console
+            console.log('📢 Memeriksa dukungan speech...');
+            
+            // Update status di halaman
+            const speechStatusEl = document.getElementById('speechStatus');
+            
+            if ('speechSynthesis' in window) {
+                const voices = window.speechSynthesis.getVoices();
+                speechStatusEl.innerHTML = `Status Speech: ✅ Didukung (${voices.length} suara tersedia)`;
+                speechStatusEl.style.color = '#28a745';
+                
+                // Daftarkan event voiceschanged
+                window.speechSynthesis.onvoiceschanged = function() {
+                    const newVoices = window.speechSynthesis.getVoices();
+                    console.log('🔄 Voices berubah:', newVoices.length, 'suara');
+                    speechStatusEl.innerHTML = `Status Speech: ✅ Didukung (${newVoices.length} suara tersedia)`;
+                };
+                
+                // Test sederhana (tanpa suara)
+                console.log('🎤 Contoh suara tersedia:');
+                voices.slice(0, 3).forEach(v => {
+                    console.log(`   - ${v.name} (${v.lang})`);
+                });
+            } else {
+                speechStatusEl.innerHTML = 'Status Speech: ❌ Tidak didukung';
+                speechStatusEl.style.color = '#dc3545';
+            }
+            
+            // Aktifkan tombol debug jika ada parameter di URL
+            if (window.location.search.includes('debug=true')) {
+                document.getElementById('debugButtons').style.display = 'block';
+                document.getElementById('debug-info').style.display = 'block';
+                
+                // Tambah info debug
+                const debugEl = document.getElementById('debug-info');
+                setInterval(() => {
+                    if ('speechSynthesis' in window) {
+                        debugEl.innerHTML = `Speech: ✅ OK | Voices: ${window.speechSynthesis.getVoices().length} | Speaking: ${window.speechSynthesis.speaking}`;
+                    } else {
+                        debugEl.innerHTML = 'Speech: ❌ Tidak didukung';
+                    }
+                }, 1000);
+            }
+        })();
+    </script>
+    
+    <!-- Test speech button (hidden by default) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tambahkan test button jika diperlukan
+            const testBtn = document.getElementById('testSpeech');
+            if (testBtn) {
+                testBtn.addEventListener('click', function() {
+                    if ('speechSynthesis' in window) {
+                        const utterance = new SpeechSynthesisUtterance('Test suara berhasil');
+                        utterance.lang = 'id-ID';
+                        utterance.onend = function() {
+                            alert('✅ Test speech berhasil!');
+                        };
+                        utterance.onerror = function(e) {
+                            alert('❌ Test speech gagal: ' + e.error);
+                        };
+                        window.speechSynthesis.speak(utterance);
+                    } else {
+                        alert('❌ Speech tidak didukung');
+                    }
+                });
+            }
+            
+            // Tambah sample text untuk memudahkan testing
+            const sampleTexts = [
+                'halo',
+                'selamat pagi',
+                'terima kasih',
+                'apa kabar'
+            ];
+            
+            // Double click pada header untuk mengisi sample
+            document.querySelector('header').addEventListener('dblclick', function() {
+                const randomSample = sampleTexts[Math.floor(Math.random() * sampleTexts.length)];
+                inputText.value = randomSample;
+                updateCharCounter();
+                showToast('Sample text: "' + randomSample + '"', 'info');
+            });
+        });
+    </script>
 </body>
 </html>
