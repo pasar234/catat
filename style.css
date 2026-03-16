@@ -89,6 +89,24 @@ header p {
     color: #333;
 }
 
+.copy-btn {
+    position: relative;
+}
+
+.copy-btn:hover::after {
+    content: 'Salin';
+    position: absolute;
+    top: -30px;
+    right: 0;
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 10;
+}
+
 textarea {
     width: 100%;
     padding: 10px;
@@ -106,11 +124,23 @@ textarea:focus {
     border-color: #667eea;
 }
 
+textarea.error {
+    border-color: #dc3545;
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
 .char-counter {
     text-align: right;
     color: #888;
     font-size: 0.9em;
     margin-top: 5px;
+    transition: color 0.3s;
 }
 
 .output-box {
@@ -120,6 +150,12 @@ textarea:focus {
     padding: 15px;
     border: 2px solid #e0e0e0;
     overflow-y: auto;
+    max-height: 300px;
+}
+
+.output-box p {
+    margin: 0;
+    line-height: 1.6;
 }
 
 .output-box .placeholder {
@@ -127,10 +163,14 @@ textarea:focus {
     font-style: italic;
 }
 
+.arabic-section .output-box {
+    font-family: 'Traditional Arabic', 'Scheherazade', 'Amiri', 'Times New Roman', serif;
+    font-size: 1.3em;
+    line-height: 1.8;
+}
+
 .arabic-text {
     text-align: right;
-    font-family: 'Traditional Arabic', 'Scheherazade', 'Times New Roman', serif;
-    font-size: 1.2em;
     direction: rtl;
 }
 
@@ -152,12 +192,19 @@ textarea:focus {
     cursor: pointer;
     transition: all 0.3s;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    min-width: 160px;
 }
 
 .translate-btn:hover {
     background: #764ba2;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.translate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .swap-btn {
@@ -168,6 +215,10 @@ textarea:focus {
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
 }
 
 .swap-btn:hover {
@@ -192,11 +243,77 @@ textarea:focus {
     font-size: 1em;
     transition: all 0.3s;
     color: #555;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 160px;
+    justify-content: center;
+}
+
+.feature-btn i {
+    font-size: 1.1em;
 }
 
 .feature-btn:hover {
     background: #667eea;
     color: white;
+}
+
+.feature-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.feature-btn:disabled:hover {
+    background: #f0f0f0;
+    color: #555;
+}
+
+/* Style untuk tombol speaking */
+.feature-btn.speaking {
+    background: #dc3545;
+    color: white;
+    animation: pulse 1.5s infinite;
+}
+
+.feature-btn.speaking i {
+    animation: spin 2s linear infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Indikator loading yang lebih halus */
+.loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
 }
 
 .note {
@@ -210,17 +327,111 @@ textarea:focus {
 .note p {
     color: #856404;
     margin: 5px 0;
+    display: flex;
+    align-items: center;
 }
 
 .note i {
     margin-right: 8px;
+    font-size: 1.1em;
 }
 
 .api-status {
     font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* Toast notification */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #333;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.success {
+    background: #28a745;
+}
+
+.toast.error {
+    background: #dc3545;
+}
+
+.toast.warning {
+    background: #ffc107;
+    color: #333;
+}
+
+.toast i {
+    font-size: 1.1em;
+}
+
+/* Tooltip */
+[title] {
+    position: relative;
+}
+
+[title]:hover::before {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    margin-bottom: 5px;
+    z-index: 10;
+}
+
+/* Scrollbar styling */
+.output-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+.output-box::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.output-box::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.output-box::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
 /* Responsive design */
+@media (max-width: 992px) {
+    .container {
+        padding: 25px;
+    }
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 20px;
@@ -228,57 +439,279 @@ textarea:focus {
     
     .translator-container {
         grid-template-columns: 1fr;
+        gap: 15px;
     }
     
     .control-buttons {
         flex-direction: row;
+        order: -1;
+    }
+    
+    .translate-btn {
+        flex: 1;
+        min-width: auto;
     }
     
     .extra-features {
         flex-direction: column;
+        gap: 10px;
     }
     
     .feature-btn {
         width: 100%;
+        min-width: auto;
+    }
+    
+    header h1 {
+        font-size: 1.5em;
+    }
+    
+    .toast {
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        transform: translateY(100%);
+        text-align: center;
+        justify-content: center;
+    }
+    
+    .toast.show {
+        transform: translateY(0);
     }
 }
 
-/* Animasi loading */
-.loading {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #667eea;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 15px;
+    }
+    
+    .language-label {
+        font-size: 1em;
+    }
+    
+    .output-box {
+        min-height: 120px;
+        max-height: 250px;
+    }
+    
+    .feature-btn {
+        padding: 8px 15px;
+        font-size: 0.9em;
+    }
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+/* Dark mode support (opsional) */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    }
+    
+    .container {
+        background: #1e1e2f;
+    }
+    
+    header h1 {
+        color: #fff;
+    }
+    
+    header p {
+        color: #ccc;
+    }
+    
+    .input-section, .output-section {
+        background: #2a2a3a;
+    }
+    
+    .language-label {
+        color: #ddd;
+    }
+    
+    .language-header {
+        border-bottom-color: #444;
+    }
+    
+    textarea {
+        background: #333344;
+        color: #fff;
+        border-color: #444;
+    }
+    
+    textarea:focus {
+        border-color: #667eea;
+    }
+    
+    .output-box {
+        background: #333344;
+        border-color: #444;
+        color: #fff;
+    }
+    
+    .output-box .placeholder {
+        color: #888;
+    }
+    
+    .clear-btn, .copy-btn {
+        color: #ccc;
+    }
+    
+    .clear-btn:hover, .copy-btn:hover {
+        background: #444455;
+        color: #fff;
+    }
+    
+    .copy-btn:hover::after {
+        background: #555;
+    }
+    
+    .swap-btn {
+        background: #333344;
+        color: #ddd;
+    }
+    
+    .swap-btn:hover {
+        background: #444455;
+    }
+    
+    .feature-btn {
+        background: #333344;
+        color: #ddd;
+    }
+    
+    .feature-btn:hover {
+        background: #667eea;
+        color: white;
+    }
+    
+    .note {
+        background: #332e1d;
+        border-left-color: #ffc107;
+    }
+    
+    .note p {
+        color: #ffd966;
+    }
 }
 
-/* Toast notification */
-.toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #333;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 8px;
-    animation: slideIn 0.3s ease;
-    z-index: 1000;
-}
-
-@keyframes slideIn {
+/* Animasi fade in untuk konten */
+@keyframes fadeIn {
     from {
-        transform: translateX(100%);
         opacity: 0;
+        transform: translateY(10px);
     }
     to {
-        transform: translateX(0);
         opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.translator-container > * {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Hover effect untuk output box */
+.output-box:hover {
+    border-color: #667eea;
+    transition: border-color 0.3s;
+}
+
+/* Style untuk statistik karakter */
+.char-counter.warning {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.char-counter.danger {
+    color: #dc3545;
+    font-weight: bold;
+    animation: pulse 1s infinite;
+}
+
+/* Loading skeleton untuk output */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+    height: 20px;
+    margin: 5px 0;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Style untuk text arabic yang lebih baik */
+.arabic-text p {
+    font-family: 'Traditional Arabic', 'Scheherazade', 'Amiri', 'Times New Roman', serif;
+    line-height: 2;
+    word-spacing: 2px;
+}
+
+/* Badge untuk menandakan mode demo */
+.demo-badge {
+    display: inline-block;
+    background: #ffc107;
+    color: #333;
+    font-size: 0.7em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* Style untuk shortcut keyboard */
+kbd {
+    background: #f7f7f7;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+    color: #333;
+    display: inline-block;
+    font-size: 0.85em;
+    font-weight: 700;
+    line-height: 1;
+    padding: 2px 4px;
+    white-space: nowrap;
+}
+
+.shortcut-hint {
+    color: #888;
+    font-size: 0.85em;
+    margin-top: 5px;
+    text-align: right;
+}
+
+.shortcut-hint i {
+    margin-right: 4px;
+}
+
+/* Print styles */
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+    
+    .container {
+        box-shadow: none;
+        padding: 20px;
+    }
+    
+    .translate-btn, .swap-btn, .extra-features, .note {
+        display: none;
+    }
+    
+    .output-box {
+        border: 1px solid #000;
+        page-break-inside: avoid;
     }
 }
