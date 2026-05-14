@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Video Editor Pro - Audio & Text Timeline</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: #0a0f1e;
+            color: white;
+            display: flex;
+            justify-content: center;
+            padding: 16px;
+            margin: 0;
+        }
+        .container {
+            background: #1a1f2e;
+            padding: 20px;
+            border-radius: 28px;
+            width: 100%;
+            max-width: 550px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        h2 {
+            text-align: center;
+            color: #00e5ff;
+            margin: 0 0 5px;
+        }
+        .sub {
+            text-align: center;
+            font-size: 12px;
+            color: #88aaff;
+            margin-bottom: 20px;
+        }
+        .label {
+            font-weight: 600;
+            margin: 12px 0 5px;
+            font-size: 14px;
+            color: #b9e6ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        input[type="file"] {
+            width: 100%;
+            border-radius: 16px;
+            padding: 12px;
+            background: #10131f;
+            border: 1px solid #333;
+            color: white;
+        }
+        input[type="file"]::file-selector-button {
+            background: #00e5ff;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-weight: bold;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+        textarea {
+            width: 100%;
+            border-radius: 16px;
+            padding: 12px;
+            background: #10131f;
+            border: 1px solid #333;
+            color: white;
+            font-family: inherit;
+            resize: vertical;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #00e5ff;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #000;
+            margin-top: 18px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        .status {
+            background: #0e1120;
+            border-radius: 20px;
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+            margin: 15px 0;
+            border-left: 3px solid #00e5ff;
+        }
+        video {
+            width: 100%;
+            border-radius: 16px;
+            margin-top: 10px;
+            background: #000;
+        }
+        .download-btn {
+            display: inline-block;
+            width: 100%;
+            background: #22c55e;
+            text-align: center;
+            padding: 12px;
+            border-radius: 40px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .row {
+            display: flex;
+            gap: 12px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        .row button {
+            margin: 0;
+            flex: 1;
+            background: #252c40;
+            color: white;
+        }
+        .row button.active {
+            background: #00e5ff;
+            color: #000;
+        }
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 40px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .color-option.active {
+            border-color: white;
+            transform: scale(1.1);
+        }
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .output-area {
+            display: none;
+            margin-top: 20px;
+        }
+        canvas {
+            display: none;
+        }
+        .file-info {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        /* ========== TIMELINE STYLE ========== */
+        .timeline-section {
+            background: #0e1120;
+            border-radius: 20px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        .timeline-track {
+            background: #1a1f2e;
+            border-radius: 12px;
+            padding: 10px;
+            margin: 10px 0;
+            position: relative;
+        }
+        .track-label {
+            font-size: 11px;
+            color: #00e5ff;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .timeline-bar {
+            background: #2a2f40;
+            height: 44px;
+            border-radius: 12px;
+            position: relative;
+            touch-action: none;
+        }
+        .video-clip-bar {
+            background: #1a4f4f;
+            height: 44px;
+            border-radius: 12px;
+            position: relative;
+        }
+        .video-progress {
+            position: absolute;
+            left: 0%;
+            width: 3px;
+            height: 44px;
+            background: #ffaa00;
+            top: 0;
+            border-radius: 2px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .clip-item {
+            background: linear-gradient(135deg, #00e5ff, #0088aa);
+            height: 44px;
+            border-radius: 12px;
+            position: absolute;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #000;
+            cursor: grab;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 8px;
+            z-index: 5;
+            touch-action: none;
+        }
+        .clip-item:active {
+            cursor: grabbing;
+        }
+        .audio-clip {
+            background: linear-gradient(135deg, #00e5ff, #0088aa);
+        }
+        .text-clip {
+            background: linear-gradient(135deg, #ff6b6b, #cc4444);
+        }
+        .resize-handle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 25px;
+            height: 100%;
+            background: rgba(255,255,255,0.4);
+            border-radius: 0 12px 12px 0;
+            cursor: ew-resize;
+            touch-action: none;
+        }
+        .resize-handle-left {
+            left: 0;
+            right: auto;
+            border-radius: 12px 0 0 12px;
+            cursor: ew-resize;
+            touch-action: none;
+        }
+        .timeline-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+            flex-wrap: wrap;
+        }
+        .timeline-controls input {
+            flex: 1;
+            padding: 8px;
+            border-radius: 12px;
+            background: #10131f;
+            border: 1px solid #333;
+            color: white;
+            font-size: 12px;
+            min-width: 70px;
+        }
+        .btn-small {
+            background: #252c40;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            margin: 0;
+            width: auto;
+        }
+        .duration-info {
+            font-size: 11px;
+            color: #aaa;
+            text-align: center;
+            margin-top: 8px;
+        }
+        
+        /* Preview player */
+        .preview-player {
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .preview-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            background: #0e1120;
+            border-radius: 0 0 16px 16px;
+            flex-wrap: wrap;
+        }
+        .preview-controls button {
+            width: auto;
+            padding: 8px 16px;
+            margin: 0;
+            background: #00e5ff;
+        }
+        .time-display {
+            font-size: 11px;
+            font-family: monospace;
+            margin-left: auto;
+        }
+        .volume-slider {
+            width: 80px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #333;
+            border-radius: 4px;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            width: 12px;
+            height: 12px;
+            background: #00e5ff;
+            border-radius: 50%;
+            cursor: pointer;
+            -webkit-appearance: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎬 Video Editor Pro</h2>
+    <div class="sub">Audio & Text Timeline • Geser & Potong</div>
+
+    <!-- 1. Pilih Video -->
+    <div class="label">📂 1. Pilih Video (Max 60 detik)</div>
+    <input type="file" id="videoInput" accept="video/*">
+    <div class="file-info" id="videoInfo">* Video akan otomatis dimute</div>
+
+    <!-- PREVIEW PLAYER -->
+    <div class="preview-player" id="previewPlayer" style="display: none;">
+        <video id="previewVideo" playsinline style="margin:0; border-radius:16px 16px 0 0; width:100%;"></video>
+        <div class="preview-controls">
+            <button id="previewPlayBtn" class="btn-small">▶ Play</button>
+            <button id="previewAudioTestBtn" class="btn-small">🎵 Test Audio</button>
+            <input type="range" id="previewVolume" class="volume-slider" min="0" max="100" value="80">
+            <span class="time-display" id="previewTime">00:00 / 00:00</span>
+        </div>
+    </div>
+
+    <!-- 2. Pilih Suara -->
+    <div class="label">🎵 2. Tambah Suara/Lagu</div>
+    <input type="file" id="audioInput" accept="audio/*">
+    <div class="file-info" id="audioInfo">* Bisa diisi lagu/audio sendiri</div>
+
+    <!-- TIMELINE SECTION -->
+    <div class="timeline-section">
+        <div class="timeline-header">
+            <span>🎚️ TIMELINE EDITOR</span>
+            <span>Sentuh & geser / tarik ujung</span>
+        </div>
+        
+        <div class="track-label">
+            <span>🎬 VIDEO</span>
+            <span id="videoDurLabel" style="font-size:10px;">0 detik</span>
+        </div>
+        <div class="timeline-bar video-clip-bar" id="videoTimelineBar">
+            <div id="videoProgress" class="video-progress"></div>
+        </div>
+        
+        <!-- AUDIO TRACK -->
+        <div class="track-label">
+            <span>🎵 AUDIO</span>
+            <span id="audioTrackStatus" style="font-size:10px; color:#ffaa66;">Belum ada audio</span>
+        </div>
+        <div class="timeline-bar" id="audioTimelineBar" style="position:relative; touch-action: none;">
+            <div id="audioClip" class="clip-item audio-clip" style="display: none; position: absolute; left: 0%; width: 30%;">
+                🎵 Audio
+                <div class="resize-handle" id="audioResizeRight"></div>
+                <div class="resize-handle resize-handle-left" id="audioResizeLeft"></div>
+            </div>
+        </div>
+        
+        <!-- TEXT TRACK (Baru!) -->
+        <div class="track-label">
+            <span>📝 TEKS</span>
+            <span id="textTrackStatus" style="font-size:10px; color:#ffaa66;">Belum ada teks</span>
+        </div>
+        <div class="timeline-bar" id="textTimelineBar" style="position:relative; touch-action: none;">
+            <div id="textClip" class="clip-item text-clip" style="display: none; position: absolute; left: 0%; width: 20%;">
+                📝 Teks
+                <div class="resize-handle" id="textResizeRight"></div>
+                <div class="resize-handle resize-handle-left" id="textResizeLeft"></div>
+            </div>
+        </div>
+        
+        <div class="timeline-controls">
+            <input type="number" id="audioStartTime" step="0.5" value="0" placeholder="Audio Mulai">
+            <input type="number" id="audioEndTime" step="0.5" value="5.0" placeholder="Audio Akhir">
+            <button id="applyAudioBtn" class="btn-small">📐 Terapkan Audio</button>
+        </div>
+        <div class="timeline-controls">
+            <input type="number" id="textStartTime" step="0.5" value="0.5" placeholder="Teks Mulai">
+            <input type="number" id="textEndTime" step="0.5" value="5.0" placeholder="Teks Akhir">
+            <button id="applyTextBtn" class="btn-small">📐 Terapkan Teks</button>
+        </div>
+        <div class="duration-info" id="timelineInfo">Sentuh & geser batang biru (audio) atau merah (teks), tarik ujung untuk potong</div>
+    </div>
+
+    <!-- Teks Overlay -->
+    <div class="label">✏️ 3. Teks di Layar</div>
+    <textarea id="overlayText" rows="2" placeholder="Tulis teks di sini..."></textarea>
+
+    <div class="row">
+        <button id="posTop" class="active">Atas</button>
+        <button id="posMid">Tengah</button>
+        <button id="posBottom">Bawah</button>
+    </div>
+
+    <div class="label">🎨 Warna Teks</div>
+    <div class="color-palette">
+        <div class="color-option" style="background: #FFFFFF;" data-color="#FFFFFF"></div>
+        <div class="color-option" style="background: #FFE500;" data-color="#FFE500"></div>
+        <div class="color-option" style="background: #00E5FF;" data-color="#00E5FF"></div>
+        <div class="color-option" style="background: #FF6B6B;" data-color="#FF6B6B"></div>
+        <div class="color-option" style="background: #4ECDC4;" data-color="#4ECDC4"></div>
+        <div class="color-option" style="background: #FF9F43;" data-color="#FF9F43"></div>
+        <div class="color-option" style="background: #A29BFE;" data-color="#A29BFE"></div>
+        <div class="color-option" style="background: #55E6C1;" data-color="#55E6C1"></div>
+    </div>
+    <input type="color" id="customColor" value="#FFFFFF" style="width: 100%; margin-top: 8px; height: 40px; border-radius: 16px; background: #10131f; border: 1px solid #333;">
+
+    <div class="row">
+        <span style="flex:1">🔤 Ukuran Teks:</span>
+        <input type="range" id="textSize" min="24" max="80" value="42" style="flex:2">
+        <span id="sizeVal" style="width: 45px;">42px</span>
+    </div>
+
+    <hr>
+
+    <button id="processBtn">✨ PRODUKSI & DOWNLOAD VIDEO ✨</button>
+    
+    <div id="infoStatus" class="status">📱 Pilih video, atur timeline audio & teks, lalu produksi.</div>
+
+    <div id="outputArea" class="output-area">
+        <video id="outputVideo" controls playsinline></video>
+        <a id="downloadLink" class="download-btn">💾 SIMPAN KE GALERI</a>
+    </div>
+</div>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+    (function() {
+        // DOM Elements
+        const videoInput = document.getElementById('videoInput');
+        const audioInput = document.getElementById('audioInput');
+        const previewVideo = document.getElementById('previewVideo');
+        const previewPlayer = document.getElementById('previewPlayer');
+        const previewPlayBtn = document.getElementById('previewPlayBtn');
+        const previewAudioTestBtn = document.getElementById('previewAudioTestBtn');
+        const previewVolume = document.getElementById('previewVolume');
+        const previewTime = document.getElementById('previewTime');
+        
+        const overlayText = document.getElementById('overlayText');
+        const processBtn = document.getElementById('processBtn');
+        const infoStatus = document.getElementById('infoStatus');
+        const outputVideo = document.getElementById('outputVideo');
+        const downloadLink = document.getElementById('downloadLink');
+        const outputArea = document.getElementById('outputArea');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const videoInfo = document.getElementById('videoInfo');
+        const audioInfo = document.getElementById('audioInfo');
+        const videoDurLabel = document.getElementById('videoDurLabel');
+        
+        const posTop = document.getElementById('posTop');
+        const posMid = document.getElementById('posMid');
+        const posBottom = document.getElementById('posBottom');
+        const textSize = document.getElementById('textSize');
+        const sizeVal = document.getElementById('sizeVal');
+        const customColor = document.getElementById('customColor');
+        
+        // Timeline elements
+        const audioStartTime = document.getElementById('audioStartTime');
+        const audioEndTime = document.getElementById('audioEndTime');
+        const textStartTime = document.getElementById('textStartTime');
+        const textEndTime = document.getElementById('textEndTime');
+        const audioClip = document.getElementById('audioClip');
+        const textClip = document.getElementById('textClip');
+        const audioTimelineBar = document.getElementById('audioTimelineBar');
+        const textTimelineBar = document.getElementById('textTimelineBar');
+        const audioTrackStatus = document.getElementById('audioTrackStatus');
+        const textTrackStatus = document.getElementById('textTrackStatus');
+        const applyAudioBtn = document.getElementById('applyAudioBtn');
+        const applyTextBtn = document.getElementById('applyTextBtn');
+        const timelineInfo = document.getElementById('timelineInfo');
+        const videoProgress = document.getElementById('videoProgress');
+        
+        let selectedVideoFile = null;
+        let selectedAudioFile = null;
+        let videoDuration = 0;
+        let audioDuration = 0;
+        let textPosition = 'top';
+        let fontSize = 42;
+        let textColor = '#FFFFFF';
+        
+        // Timeline values
+        let audioTrimStart = 0;
+        let audioTrimEnd = 0;
+        let textTrimStart = 0.5;
+        let textTrimEnd = 5.0;
+        
+        // ========== WARNA TEKS ==========
+        const colorOptions = document.querySelectorAll('.color-option');
+        colorOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                colorOptions.forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                textColor = opt.dataset.color;
+                customColor.value = textColor;
+            });
+        });
+        customColor.addEventListener('input', (e) => {
+            textColor = e.target.value;
+            colorOptions.forEach(o => o.classList.remove('active'));
+        });
+        
+        // ========== POSISI TEKS ==========
+        posTop.onclick = () => {
+            [posTop, posMid, posBottom].forEach(b => b.classList.remove('active'));
+            posTop.classList.add('active');
+            textPosition = 'top';
+        };
+        posMid.onclick = () => {
+            [posTop, posMid, posBottom].forEach(b => b.classList.remove('active'));
+            posMid.classList.add('active');
+            textPosition = 'middle';
+        };
+        posBottom.onclick = () => {
+            [posTop, posMid, posBottom].forEach(b => b.classList.remove('active'));
+            posBottom.classList.add('active');
+            textPosition = 'bottom';
+        };
+        
+        textSize.oninput = (e) => {
+            fontSize = parseInt(e.target.value);
+            sizeVal.innerText = fontSize + 'px';
+        };
+        
+        // Update teks dari textarea ke timeline
+        overlayText.addEventListener('input', () => {
+            updateTextTimeline();
+        });
+        
+        function updateTextTimeline() {
+            const hasText = overlayText.value.trim().length > 0;
+            if (hasText && videoDuration > 0) {
+                textClip.style.display = 'flex';
+                const startPercent = (textTrimStart / videoDuration) * 100;
+                const widthPercent = ((textTrimEnd - textTrimStart) / videoDuration) * 100;
+                textClip.style.left = Math.max(0, Math.min(100, startPercent)) + '%';
+                textClip.style.width = Math.min(widthPercent, 100 - startPercent) + '%';
+                textTrackStatus.innerHTML = `📝 ${textTrimStart.toFixed(1)}s - ${textTrimEnd.toFixed(1)}s (${(textTrimEnd-textTrimStart).toFixed(1)}s)`;
+                textTrackStatus.style.color = '#aaf0ff';
+            } else {
+                textClip.style.display = 'none';
+                textTrackStatus.innerHTML = 'Teks kosong';
+                textTrackStatus.style.color = '#ffaa66';
+            }
+        }
+        
+        function updateAudioTimeline() {
+            if (!videoDuration || videoDuration <= 0) return;
+            
+            const startPercent = (audioTrimStart / videoDuration) * 100;
+            const widthPercent = ((audioTrimEnd - audioTrimStart) / videoDuration) * 100;
+            
+            if (selectedAudioFile && audioDuration > 0 && widthPercent > 0) {
+                audioClip.style.display = 'flex';
+                audioClip.style.left = Math.max(0, Math.min(100, startPercent)) + '%';
+                audioClip.style.width = Math.min(widthPercent, 100 - startPercent) + '%';
+                audioTrackStatus.innerHTML = `🎵 ${audioTrimStart.toFixed(1)}s - ${audioTrimEnd.toFixed(1)}s (${(audioTrimEnd-audioTrimStart).toFixed(1)}s)`;
+                audioTrackStatus.style.color = '#aaf0ff';
+            } else {
+                audioClip.style.display = 'none';
+                audioTrackStatus.innerHTML = 'Belum ada audio';
+                audioTrackStatus.style.color = '#ffaa66';
+            }
+        }
+        
+        function updateProgressBar() {
+            if (previewVideo && previewVideo.currentTime && videoDuration) {
+                const percent = (previewVideo.currentTime / videoDuration) * 100;
+                videoProgress.style.left = percent + '%';
+            }
+        }
+        
+        // ========== DRAG HANDLERS UNTUK AUDIO ==========
+        let isDraggingAudio = false;
+        let isResizingAudioRight = false;
+        let isResizingAudioLeft = false;
+        let dragStartX = 0;
+        let dragStartLeft = 0;
+        
+        function getClientX(e) {
+            if (e.touches) return e.touches[0].clientX;
+            return e.clientX;
+        }
+        
+        function onAudioDragStart(e, type) {
+            e.preventDefault();
+            e.stopPropagation();
+            const clientX = getClientX(e);
+            dragStartX = clientX;
+            dragStartLeft = parseFloat(audioClip.style.left);
+            
+            if (type === 'right') isResizingAudioRight = true;
+            else if (type === 'left') isResizingAudioLeft = true;
+            else isDraggingAudio = true;
+        }
+        
+        function onAudioDragMove(e) {
+            if (!isDraggingAudio && !isResizingAudioRight && !isResizingAudioLeft) return;
+            if (!videoDuration) return;
+            
+            e.preventDefault();
+            const clientX = getClientX(e);
+            const barRect = audioTimelineBar.getBoundingClientRect();
+            const deltaX = clientX - dragStartX;
+            const deltaPercent = (deltaX / barRect.width) * 100;
+            
+            if (isResizingAudioRight) {
+                let widthPercent = parseFloat(audioClip.style.width) + deltaPercent;
+                widthPercent = Math.max(5, Math.min(100 - parseFloat(audioClip.style.left), widthPercent));
+                audioClip.style.width = widthPercent + '%';
+                const newEnd = (parseFloat(audioClip.style.left) + widthPercent) / 100 * videoDuration;
+                audioTrimEnd = Math.min(videoDuration, Math.max(audioTrimStart + 0.5, newEnd));
+                audioEndTime.value = audioTrimEnd.toFixed(1);
+            } else if (isResizingAudioLeft) {
+                let newLeftPercent = parseFloat(audioClip.style.left) + deltaPercent;
+                const oldRight = parseFloat(audioClip.style.left) + parseFloat(audioClip.style.width);
+                newLeftPercent = Math.max(0, Math.min(oldRight - 5, newLeftPercent));
+                audioClip.style.left = newLeftPercent + '%';
+                audioClip.style.width = (oldRight - newLeftPercent) + '%';
+                audioTrimStart = newLeftPercent / 100 * videoDuration;
+                audioTrimEnd = (oldRight / 100) * videoDuration;
+                audioStartTime.value = audioTrimStart.toFixed(1);
+                audioEndTime.value = audioTrimEnd.toFixed(1);
+            } else if (isDraggingAudio) {
+                let newLeftPercent = dragStartLeft + deltaPercent;
+                const width = parseFloat(audioClip.style.width);
+                newLeftPercent = Math.max(0, Math.min(100 - width, newLeftPercent));
+                audioClip.style.left = newLeftPercent + '%';
+                audioTrimStart = newLeftPercent / 100 * videoDuration;
+                audioTrimEnd = (newLeftPercent + width) / 100 * videoDuration;
+                audioStartTime.value = audioTrimStart.toFixed(1);
+                audioEndTime.value = audioTrimEnd.toFixed(1);
+            }
+            
+            updateAudioTimeline();
+            dragStartX = clientX;
+            if (!isDraggingAudio) dragStartLeft = parseFloat(audioClip.style.left);
+        }
+        
+        function onAudioDragEnd() {
+            isDraggingAudio = false;
+            isResizingAudioRight = false;
+            isResizingAudioLeft = false;
+            if (videoDuration) {
+                timelineInfo.innerHTML = `✅ Audio: ${audioTrimStart.toFixed(1)}s - ${audioTrimEnd.toFixed(1)}s | Teks: ${textTrimStart.toFixed(1)}s - ${textTrimEnd.toFixed(1)}s`;
+            }
+        }
+        
+        audioClip.addEventListener('touchstart', (e) => {
+            const target = e.target;
+            if (target.id === 'audioResizeRight' || target.closest('#audioResizeRight')) onAudioDragStart(e, 'right');
+            else if (target.id === 'audioResizeLeft' || target.closest('#audioResizeLeft')) onAudioDragStart(e, 'left');
+            else onAudioDragStart(e, 'drag');
+        });
+        audioClip.addEventListener('mousedown', (e) => {
+            const target = e.target;
+            if (target.id === 'audioResizeRight' || target.closest('#audioResizeRight')) onAudioDragStart(e, 'right');
+            else if (target.id === 'audioResizeLeft' || target.closest('#audioResizeLeft')) onAudioDragStart(e, 'left');
+            else onAudioDragStart(e, 'drag');
+        });
+        
+        // ========== DRAG HANDLERS UNTUK TEKS ==========
+        let isDraggingText = false;
+        let isResizingTextRight = false;
+        let isResizingTextLeft = false;
+        let textDragStartX = 0;
+        let textDragStartLeft = 0;
+        
+        function onTextDragStart(e, type) {
+            e.preventDefault();
+            e.stopPropagation();
+            const clientX = getClientX(e);
+            textDragStartX = clientX;
+            textDragStartLeft = parseFloat(textClip.style.left);
+            
+            if (type === 'right') isResizingTextRight = true;
+            else if (type === 'left') isResizingTextLeft = true;
+            else isDraggingText = true;
+        }
+        
+        function onTextDragMove(e) {
+            if (!isDraggingText && !isResizingTextRight && !isResizingTextLeft) return;
+            if (!videoDuration) return;
+            
+            e.preventDefault();
+            const clientX = getClientX(e);
+            const barRect = textTimelineBar.getBoundingClientRect();
+            const deltaX = clientX - textDragStartX;
+            const deltaPercent = (deltaX / barRect.width) * 100;
+            
+            if (isResizingTextRight) {
+                let widthPercent = parseFloat(textClip.style.width) + deltaPercent;
+                widthPercent = Math.max(5, Math.min(100 - parseFloat(textClip.style.left), widthPercent));
+                textClip.style.width = widthPercent + '%';
+                const newEnd = (parseFloat(textClip.style.left) + widthPercent) / 100 * videoDuration;
+                textTrimEnd = Math.min(videoDuration, Math.max(textTrimStart + 0.5, newEnd));
+                textEndTime.value = textTrimEnd.toFixed(1);
+            } else if (isResizingTextLeft) {
+                let newLeftPercent = parseFloat(textClip.style.left) + deltaPercent;
+                const oldRight = parseFloat(textClip.style.left) + parseFloat(textClip.style.width);
+                newLeftPercent = Math.max(0, Math.min(oldRight - 5, newLeftPercent));
+                textClip.style.left = newLeftPercent + '%';
+                textClip.style.width = (oldRight - newLeftPercent) + '%';
+                textTrimStart = newLeftPercent / 100 * videoDuration;
+                textTrimEnd = (oldRight / 100) * videoDuration;
+                textStartTime.value = textTrimStart.toFixed(1);
+                textEndTime.value = textTrimEnd.toFixed(1);
+            } else if (isDraggingText) {
+                let newLeftPercent = textDragStartLeft + deltaPercent;
+                const width = parseFloat(textClip.style.width);
+                newLeftPercent = Math.max(0, Math.min(100 - width, newLeftPercent));
+                textClip.style.left = newLeftPercent + '%';
+                textTrimStart = newLeftPercent / 100 * videoDuration;
+                textTrimEnd = (newLeftPercent + width) / 100 * videoDuration;
+                textStartTime.value = textTrimStart.toFixed(1);
+                textEndTime.value = textTrimEnd.toFixed(1);
+            }
+            
+            updateTextTimeline();
+            textDragStartX = clientX;
+            if (!isDraggingText) textDragStartLeft = parseFloat(textClip.style.left);
+        }
+        
+        function onTextDragEnd() {
+            isDraggingText = false;
+            isResizingTextRight = false;
+            isResizingTextLeft = false;
+            if (videoDuration) {
+                timelineInfo.innerHTML = `✅ Audio: ${audioTrimStart.toFixed(1)}s - ${audioTrimEnd.toFixed(1)}s | Teks: ${textTrimStart.toFixed(1)}s - ${textTrimEnd.toFixed(1)}s`;
+            }
+        }
+        
+        textClip.addEventListener('touchstart', (e) => {
+            const target = e.target;
+            if (target.id === 'textResizeRight' || target.closest('#textResizeRight')) onTextDragStart(e, 'right');
+            else if (target.id === 'textResizeLeft' || target.closest('#textResizeLeft')) onTextDragStart(e, 'left');
+            else onTextDragStart(e, 'drag');
+        });
+        textClip.addEventListener('mousedown', (e) => {
+            const target = e.target;
+            if (target.id === 'textResizeRight' || target.closest('#textResizeRight')) onTextDragStart(e, 'right');
+            else if (target.id === 'textResizeLeft' || target.closest('#textResizeLeft')) onTextDragStart(e, 'left');
+            else onTextDragStart(e, 'drag');
+        });
+        
+        window.addEventListener('touchmove', (e) => { onAudioDragMove(e); onTextDragMove(e); });
+        window.addEventListener('mousemove', (e) => { onAudioDragMove(e); onTextDragMove(e); });
+        window.addEventListener('touchend', () => { onAudioDragEnd(); onTextDragEnd(); });
+        window.addEventListener('mouseup', () => { onAudioDragEnd(); onTextDragEnd(); });
+        
+        // Apply buttons
+        applyAudioBtn.onclick = () => {
+            let start = parseFloat(audioStartTime.value);
+            let end = parseFloat(audioEndTime.value);
+            if (isNaN(start)) start = 0;
+            if (isNaN(end)) end = Math.min(videoDuration, audioDuration);
+            audioTrimStart = Math.max(0, Math.min(videoDuration - 0.5, start));
+            audioTrimEnd = Math.min(videoDuration, Math.max(audioTrimStart + 0.5, end));
+            audioStartTime.value = audioTrimStart.toFixed(1);
+            audioEndTime.value = audioTrimEnd.toFixed(1);
+            updateAudioTimeline();
+        };
+        
+        applyTextBtn.onclick = () => {
+            let start = parseFloat(textStartTime.value);
+            let end = parseFloat(textEndTime.value);
+            if (isNaN(start)) start = 0.5;
+            if (isNaN(end)) end = 5.0;
+            textTrimStart = Math.max(0, Math.min(videoDuration - 0.5, start));
+            textTrimEnd = Math.min(videoDuration, Math.max(textTrimStart + 0.5, end));
+            textStartTime.value = textTrimStart.toFixed(1);
+            textEndTime.value = textTrimEnd.toFixed(1);
+            updateTextTimeline();
+        };
+        
+        // ========== PILIH VIDEO ==========
+        let videoObjectUrl = null;
+        
+        videoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (videoObjectUrl) URL.revokeObjectURL(videoObjectUrl);
+            const url = URL.createObjectURL(file);
+            videoObjectUrl = url;
+            
+            const tempVideo = document.createElement('video');
+            tempVideo.src = url;
+            tempVideo.onloadedmetadata = () => {
+                const duration = tempVideo.duration;
+                if (duration > 60) {
+                    alert(`⚠️ Video terlalu panjang! Durasi: ${duration.toFixed(1)} detik\nMaksimal 60 detik.`);
+                    videoInput.value = '';
+                    selectedVideoFile = null;
+                    previewPlayer.style.display = 'none';
+                    videoInfo.innerHTML = '❌ Video melebihi 60 detik';
+                    URL.revokeObjectURL(url);
+                    return;
+                }
+                
+                selectedVideoFile = file;
+                videoDuration = duration;
+                videoDurLabel.innerText = duration.toFixed(1) + ' detik';
+                textEndTime.value = Math.min(5, duration);
+                textEndTime.max = duration;
+                textStartTime.max = duration;
+                textTrimEnd = Math.min(duration, textTrimEnd);
+                textStartTime.value = textTrimStart.toFixed(1);
+                textEndTime.value = textTrimEnd.toFixed(1);
+                
+                previewVideo.src = url;
+                previewVideo.muted = true;
+                previewPlayer.style.display = 'block';
+                previewVideo.load();
+                
+                previewVideo.ontimeupdate = () => {
+                    const current = previewVideo.currentTime;
+                    const minutes = Math.floor(current / 60);
+                    const seconds = Math.floor(current % 60);
+                    const totalMinutes = Math.floor(videoDuration / 60);
+                    const totalSeconds = Math.floor(videoDuration % 60);
+                    previewTime.innerText = `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')} / ${totalMinutes.toString().padStart(2,'0')}:${totalSeconds.toString().padStart(2,'0')}`;
+                    updateProgressBar();
+                };
+                
+                previewVideo.onended = () => {
+                    previewPlayBtn.textContent = '▶ Play';
+                };
+                
+                if (audioDuration > 0) {
+                    audioTrimStart = 0;
+                    audioTrimEnd = Math.min(duration, audioDuration);
+                    audioStartTime.value = 0;
+                    audioEndTime.value = audioTrimEnd.toFixed(1);
+                }
+                
+                videoInfo.innerHTML = `✅ Video: ${file.name.substring(0, 35)} (${duration.toFixed(1)} detik)`;
+                videoInfo.style.color = '#aaf0ff';
+                updateAudioTimeline();
+                updateTextTimeline();
+            };
+        });
+        
+        previewPlayBtn.onclick = () => {
+            if (!previewVideo.src) { alert("Pilih video dulu!"); return; }
+            if (previewVideo.paused) {
+                previewVideo.play().catch(e => console.log(e));
+                previewPlayBtn.textContent = '⏸ Pause';
+            } else {
+                previewVideo.pause();
+                previewPlayBtn.textContent = '▶ Play';
+            }
+        };
+        
+        previewVideo.onclick = () => {
+            if (previewVideo.paused) {
+                previewVideo.play().catch(e => console.log(e));
+                previewPlayBtn.textContent = '⏸ Pause';
+            } else {
+                previewVideo.pause();
+                previewPlayBtn.textContent = '▶ Play';
+            }
+        };
+        
+        previewVolume.oninput = (e) => {
+            previewVideo.volume = e.target.value / 100;
+        };
+        
+        let previewAudioObj = null;
+        previewAudioTestBtn.onclick = () => {
+            if (selectedAudioFile) {
+                if (previewAudioObj) previewAudioObj.pause();
+                const url = URL.createObjectURL(selectedAudioFile);
+                previewAudioObj = new Audio(url);
+                previewAudioObj.currentTime = audioTrimStart;
+                previewAudioObj.volume = previewVolume.value / 100;
+                previewAudioObj.play();
+                setTimeout(() => { if (previewAudioObj) previewAudioObj.pause(); }, 4000);
+            } else {
+                alert("Pilih audio dulu!");
+            }
+        };
+        
+        // ========== PILIH AUDIO ==========
+        audioInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                selectedAudioFile = null;
+                audioInfo.innerHTML = '* Bisa diisi lagu/audio sendiri';
+                updateAudioTimeline();
+                return;
+            }
+            
+            selectedAudioFile = file;
+            audioInfo.innerHTML = `✅ Audio: ${file.name.substring(0, 35)} - (Mengukur durasi...)`;
+            
+            const url = URL.createObjectURL(file);
+            const tempAudio = new Audio(url);
+            tempAudio.onloadedmetadata = () => {
+                audioDuration = tempAudio.duration;
+                audioTrimStart = 0;
+                audioTrimEnd = Math.min(videoDuration || audioDuration, audioDuration);
+                audioStartTime.value = 0;
+                audioEndTime.value = audioTrimEnd.toFixed(1);
+                audioInfo.innerHTML = `✅ Audio: ${file.name.substring(0, 35)} (durasi ${audioDuration.toFixed(1)} detik)`;
+                updateAudioTimeline();
+                URL.revokeObjectURL(url);
+            };
+        });
+        
+        // ========== PRODUKSI VIDEO DENGAN AUDIO ==========
+        async function produceVideo() {
+            if (!selectedVideoFile) {
+                alert("Pilih video dulu!");
+                return null;
+            }
+            
+            infoStatus.innerHTML = "🔄 Memproses video... (sesuai durasi)";
+            processBtn.disabled = true;
+            
+            try {
+                const videoElem = document.createElement('video');
+                const videoUrl = URL.createObjectURL(selectedVideoFile);
+                videoElem.src = videoUrl;
+                videoElem.muted = true;
+                videoElem.playsInline = true;
+                
+                await new Promise((resolve, reject) => {
+                    videoElem.onloadedmetadata = resolve;
+                    videoElem.onerror = reject;
+                    videoElem.load();
+                });
+                
+                const w = videoElem.videoWidth;
+                const h = videoElem.videoHeight;
+                canvas.width = w;
+                canvas.height = h;
+                
+                const canvasStream = canvas.captureStream(30);
+                
+                // Setup audio dari file
+                let audioContext = null;
+                let audioElem = null;
+                let audioDestination = null;
+                
+                if (selectedAudioFile && audioDuration > 0 && audioTrimEnd > audioTrimStart) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const audioUrl = URL.createObjectURL(selectedAudioFile);
+                    audioElem = new Audio(audioUrl);
+                    audioDestination = audioContext.createMediaStreamDestination();
+                    const audioSource = audioContext.createMediaElementSource(audioElem);
+                    audioSource.connect(audioDestination);
+                    audioSource.connect(audioContext.destination);
+                }
+                
+                const combinedStream = new MediaStream();
+                canvasStream.getVideoTracks().forEach(t => combinedStream.addTrack(t));
+                if (audioDestination) {
+                    audioDestination.stream.getAudioTracks().forEach(t => combinedStream.addTrack(t));
+                }
+                
+                const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+                let chunks = [];
+                recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+                recorder.start(100);
+                
+                const teksLayar = overlayText.value.trim();
+                const teksMulai = textTrimStart;
+                const teksSelesai = textTrimEnd;
+                
+                let animationId;
+                let audioStarted = false;
+                
+                const draw = () => {
+                    if (videoElem.paused || videoElem.ended) {
+                        if (!videoElem.ended) {
+                            animationId = requestAnimationFrame(draw);
+                        }
+                        return;
+                    }
+                    
+                    const waktu = videoElem.currentTime;
+                    ctx.drawImage(videoElem, 0, 0, w, h);
+                    
+                    if (teksLayar && waktu >= teksMulai && waktu <= teksSelesai) {
+                        ctx.save();
+                        ctx.shadowColor = "rgba(0,0,0,0.8)";
+                        ctx.shadowBlur = 8;
+                        const ukuran = Math.min(fontSize, h * 0.15);
+                        ctx.font = `bold ${ukuran}px "Segoe UI", "Poppins", system-ui`;
+                        ctx.fillStyle = textColor;
+                        ctx.textAlign = "center";
+                        
+                        let yPos = h * 0.12;
+                        if (textPosition === 'middle') yPos = h / 2;
+                        else if (textPosition === 'bottom') yPos = h - 55;
+                        else yPos = 55;
+                        
+                        ctx.shadowBlur = 0;
+                        ctx.strokeStyle = "black";
+                        ctx.lineWidth = 3;
+                        ctx.strokeText(teksLayar, w / 2, yPos);
+                        ctx.fillText(teksLayar, w / 2, yPos);
+                        ctx.restore();
+                    }
+                    
+                    // Kontrol audio berdasarkan timeline
+                    if (audioElem && audioContext && !audioElem.paused) {
+                        if (waktu < audioTrimStart && !audioElem.paused) {
+                            audioElem.pause();
+                            audioElem.currentTime = 0;
+                        } else if (waktu >= audioTrimStart && !audioStarted && audioElem.paused) {
+                            audioElem.currentTime = 0;
+                            audioElem.play();
+                            audioStarted = true;
+                        } else if (waktu >= audioTrimEnd && !audioElem.paused) {
+                            audioElem.pause();
+                        }
+                    }
+                    
+                    animationId = requestAnimationFrame(draw);
+                };
+                
+                await videoElem.play();
+                draw();
+                
+                if (audioElem && audioContext) {
+                    await audioContext.resume();
+                }
+                
+                videoElem.onended = () => {
+                    setTimeout(() => {
+                        if (recorder.state === 'recording') recorder.stop();
+                        if (audioElem) audioElem.pause();
+                    }, 300);
+                };
+                
+                const result = await new Promise((resolve) => {
+                    recorder.onstop = () => {
+                        cancelAnimationFrame(animationId);
+                        const blob = new Blob(chunks, { type: 'video/webm' });
+                        const url = URL.createObjectURL(blob);
+                        resolve({ url, blob });
+                    };
+                });
+                
+                videoElem.pause();
+                videoElem.src = "";
+                URL.revokeObjectURL(videoUrl);
+                if (audioContext) audioContext.close();
+                
+                return result;
+                
+            } catch (err) {
+                console.error(err);
+                infoStatus.innerHTML = "❌ Gagal: " + (err.message || "Coba lagi");
+                return null;
+            } finally {
+                processBtn.disabled = false;
+            }
+        }
+        
+        processBtn.onclick = async () => {
+            const hasil = await produceVideo();
+            if (hasil) {
+                outputVideo.src = hasil.url;
+                downloadLink.href = hasil.url;
+                downloadLink.download = "video_editor_hasil.webm";
+                outputArea.style.display = "block";
+                infoStatus.innerHTML = "✅ BERHASIL! Video siap. Klik SIMPAN KE GALERI.";
+                outputArea.scrollIntoView({ behavior: "smooth" });
+            } else {
+                alert("Gagal memproduksi video. Pastikan audio dan video valid.");
+            }
+        };
+    })();
+</script>
+</body>
+</html>
